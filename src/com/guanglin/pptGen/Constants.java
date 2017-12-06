@@ -11,8 +11,10 @@ public class Constants {
     /**************** app configuration variables ****************/
 
     // Project config
-            public  final static String APPCONFIG_PRO_NAME = "guanglin.project.name";
-    public final static String PPT_TEMPLATE_FOLDER = "ppt.template.folder";
+    public final static String APPCONFIG_PRO_NAME = "guanglin.project.name";
+    public final static String APPCONFIG_PPT_TEMPLATE_PATH = "guanglin.ppt.template.path";
+    public final static String APPCONFIG_PPT_TEMPLATE_CONFIG = "guanglin.ppt.template.config";
+    public final static String APPCONFIG_PPT_PROJECT_CONFIG = "guanglin.ppt.project.config";
     public final static String PPT_TEMPLATE_TYPE = "ppt.template.type";
 
     // datasource configuration
@@ -21,7 +23,6 @@ public class Constants {
     public final static String DATASOUCE_EXCEL_FILENAME = "guanglin.datasource.excel.file";
 
     public final static Properties PROS = new Properties();
-
 
 
     /*******************************************************/

@@ -1,14 +1,17 @@
 package com.guanglin.pptGen.model.pptConfig;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 
 @Builder
 @Data
+@AllArgsConstructor
 public class Font {
-    public String family;
-    public String size;
-    public String color;
-    public String style;
+    private String family;
+    private String size;
+    private String color;
+    private String style;
+    private String content;
 
 }

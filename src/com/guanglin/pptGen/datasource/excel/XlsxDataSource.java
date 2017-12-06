@@ -1,6 +1,7 @@
 package com.guanglin.pptGen.datasource.excel;
 
 import com.google.common.base.Strings;
+import com.guanglin.pptGen.exception.DataSourceException;
 import com.guanglin.pptGen.exception.ExcelValidationException;
 import com.guanglin.pptGen.model.Item;
 import com.guanglin.pptGen.model.Project;
@@ -33,47 +34,58 @@ public class XlsxDataSource extends ExcelDataSourceBase {
     }
 
     @Override
-    protected List<Item> extractItemsFromWorkbook() throws ExcelValidationException {
+    protected List<Item> extractItemsFromWorkbook() throws ExcelValidationException, DataSourceException {
 
         // check the workbook contains the required fields and values
         ValidateWorkbookContent();
 
-        Sheet sheet = xssfWorkbook.getSheetAt(1);
+        Sheet sheet = xssfWorkbook.getSheetAt(0);
         List<Item> itemsRet = new ArrayList<>();
 
         // the first data row equals title row index plus 1
         int validRowIndex = titleRowIndex + 1;
 
         do {
-            try {
-                Row row = sheet.getRow(validRowIndex);
+            Row row = sheet.getRow(validRowIndex);
 
-                // Convert the String to int successfully, then start to map the value to item
-                if (Integer.valueOf(row.getCell(1).getStringCellValue()) > 0) {
+            // Convert the String to int successfully, then start to map the value to item
+            if (row.getCell(0).getNumericCellValue() > 0) {
 
-                    for (Map.Entry<String, String> e : fields.entrySet()) {
-                        Item item = new Item();
-                        Map<String, String> tmpMap = new HashMap<>();
+                Map<String, String> tmpMap = new HashMap<>();
+                Item item = new Item();
+                for (Map.Entry<String, String> e : fields.entrySet()) {
 
-                        // foreach cells to get the values
-                        for (int i = 1; i <= fields.size(); i++) {
-                            Cell cell = row.getCell(i);
-                            tmpMap.put(e.getValue(), cell.getStringCellValue());
+                    // foreach cells to get the values
+                    for (int i = 0; i < fields.size(); i++) {
+                        Cell cell = row.getCell(i);
+                        switch (cell.getCellTypeEnum()) {
+                            case STRING:
+                                tmpMap.put(e.getValue(), cell.getStringCellValue());
+                                break;
+                            case BOOLEAN:
+                                tmpMap.put(e.getValue(), Boolean.valueOf(cell.getBooleanCellValue()).toString());
+                                break;
+                            case NUMERIC:
+                                tmpMap.put(e.getValue(), Double.valueOf(cell.getNumericCellValue()).toString());
+                                break;
+                            case _NONE:
+                            case BLANK:
+                                tmpMap.put(e.getValue(), "");
+                                break;
+                            default:
+                                throw new DataSourceException("unknown data format.");
                         }
-
-                        // set the map
-                        item.setFields(tmpMap);
-                        itemsRet.add(item);
                     }
+                    // set the map
+                    item.setFields(tmpMap);
                 }
-            } catch (NumberFormatException ex) {
-
-                // if converting is failed, it means there is no more valid item, then breaks the loop.
-                validRowIndex = -1;
+                itemsRet.add(item);
+                validRowIndex++;
+            } else {
+                validRowIndex = 0;
             }
 
         } while (validRowIndex > 0);
-
 
         return itemsRet;
     }
@@ -90,18 +102,18 @@ public class XlsxDataSource extends ExcelDataSourceBase {
             throw new ExcelValidationException("Sheet的名字不正确", "sheet的名字应该不是Sheet1");
         }
 
-        Sheet sheet = xssfWorkbook.getSheetAt(1);
+        Sheet sheet = xssfWorkbook.getSheetAt(0);
         // 3. validate field names, the 3th row should be field name row
-        Row row = sheet.getRow(3);
-        for (int i = 1; i <= fields.size() + 1; i++) {
-            Cell cell = row.getCell(i);
+        Row row = sheet.getRow(titleRowIndex);
+        for (int i = 1; i <= fields.size(); i++) {
+            Cell cell = row.getCell(i - 1);
             if (!Strings.isNullOrEmpty(cell.getStringCellValue())) {
 
                 // Ascii code of 'A' is 65
                 String key = String.format("%s3", (char) (64 + i));
 
-                if (fields.get(key) != null
-                        && !cell.getStringCellValue().contains(fields.get(key))) {
+                if (fields.get(key) == null
+                        || !cell.getStringCellValue().contains(fields.get(key))) {
                     throw new ExcelValidationException(
                             String.format("字段[%s]名称[%s]不正确", key, cell.getStringCellValue()),
                             String.format("字段[%s]应该是[%s]", key, fields.get(key))
@@ -112,13 +124,11 @@ public class XlsxDataSource extends ExcelDataSourceBase {
 
         }
         // 4. validate the 4th row first cell should be coverted to Integer
-        Cell a4Cell = sheet.getRow(4).getCell(1);
+        Cell a4Cell = sheet.getRow(3).getCell(0);
         try {
-            if (Strings.isNullOrEmpty(a4Cell.getStringCellValue())) {
+            if (a4Cell == null || a4Cell.getNumericCellValue() < 1) {
                 throw new ExcelValidationException("没有一个有效的广告数据", "在第4行应该至少有一条有效的广告数据");
             }
-
-            Integer.valueOf(a4Cell.getStringCellValue());
         } catch (NumberFormatException ex) {
             throw new ExcelValidationException("没有一个有效的广告数据", "在第4行应该至少有一条有效的广告数据");
         }

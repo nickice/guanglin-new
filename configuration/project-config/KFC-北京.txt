@@ -1,0 +1,25 @@
+{
+    PPTConfig: {
+        firstSlideConfig: {
+            fontConfig: {
+                family: "",
+                size: "",
+                color: "",
+                style: ""
+
+            },
+            imageConfig: {
+                height : "",
+                weight : "",
+                size: ""
+            }
+        },
+        otherSlideConfig: {
+
+        }
+        ,
+        lastSlideConfig: {
+
+        }
+    }
+}

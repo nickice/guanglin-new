@@ -6,6 +6,7 @@ import com.guanglin.pptGen.model.PPTTemplate;
 import com.guanglin.pptGen.model.Project;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.poi.sl.usermodel.Slide;
 import org.apache.poi.xslf.usermodel.XMLSlideShow;
 import org.apache.poi.xslf.usermodel.XSLFPictureShape;
 import org.apache.poi.xslf.usermodel.XSLFShape;
@@ -21,7 +22,7 @@ import java.util.Queue;
 /**
  * Created by pengyao on 30/05/2017.
  */
-public class PPTXHandler extends HanlderBase {
+public class PPTXHandler<S,P> extends HanlderBase {
 
     private static Logger LOGGER = LogManager.getLogger("PPTXHandler");
 
@@ -33,6 +34,7 @@ public class PPTXHandler extends HanlderBase {
         template = new PPTTemplate<XSLFSlide>();
 
         try {
+
             templateShow = new XMLSlideShow(stream);
         } catch (IOException ex) {
             LOGGER.fatal("致命错误：找不到PPT模版文件。");
@@ -67,6 +69,7 @@ public class PPTXHandler extends HanlderBase {
             throw new PPTException("致命错误：这个模版没有任何幻灯片，或者只有一个幻灯片。");
         }
 
+        Slide<?,?> a;
         // 2. the first slide must have two image sharps.
         XSLFSlide firstSlide = this.templateShow.getSlides().get(0);
         if (firstSlide == null

@@ -3,7 +3,11 @@ package com.guanglin.pptGen;
 import com.google.common.base.Strings;
 import com.guanglin.pptGen.datasource.DataSourceFactory;
 import com.guanglin.pptGen.exception.DataSourceException;
+import com.guanglin.pptGen.exception.PPTException;
 import com.guanglin.pptGen.model.Project;
+import com.guanglin.pptGen.model.pptConfig.PPTConfig;
+import com.guanglin.pptGen.pptUtility.PPTFactory;
+import com.guanglin.pptGen.utils.FormatCoverter;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
@@ -19,10 +23,9 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
+import static com.guanglin.pptGen.Constants.APPCONFIG_PPT_TEMPLATE_CONFIG;
+import static com.guanglin.pptGen.Constants.APPCONFIG_PPT_TEMPLATE_PATH;
 import static com.guanglin.pptGen.Constants.APPCONFIG_PRO_NAME;
-import static com.guanglin.pptGen.Constants.ARG_NAME_APPCONFIG;
-import static com.guanglin.pptGen.Constants.ARG_NAME_PROJECT;
-import static com.guanglin.pptGen.Constants.ARG_NAME_TEMPLATE;
 import static com.guanglin.pptGen.Constants.DATASOURCE_TYPE;
 import static com.guanglin.pptGen.Constants.PROS;
 
@@ -47,7 +50,8 @@ public class Main {
 
     public static void main(String[] args) {
 
-        String appConfigPath;
+        String appConfigPath = "/Users/pengyao/Workspaces/personal/guanglin-new/configuration/app.config";
+        /*
         try {
             LOGGER.info("Start to parse the arguments");
             // parse the command line arguments
@@ -69,9 +73,10 @@ public class Main {
             LOGGER.info("End to parse the arguments");
 
         } catch (ParseException e) {
-            LOGGER.fatal("Parse the error failed", e);
+            LOGGER.fatal("Parse the command argumentsfailed", e);
             return;
         }
+        */
 
         if (!appInit(appConfigPath)) {
             LOGGER.fatal("Config the app failed.");
@@ -80,16 +85,30 @@ public class Main {
 
         try {
             Project project = new Project();
+            // assign the project name
             project.setOwner(PROS.getProperty(APPCONFIG_PRO_NAME));
 
+            // assign data source setting
             String datasourceType = (String) PROS.get(DATASOURCE_TYPE);
-            project = DataSourceFactory.loadProjectData(datasourceType, project);
 
+            // assign the template path
+            String pptTemplatePath = (String) PROS.getProperty(APPCONFIG_PPT_TEMPLATE_PATH);
+            // assign the  template properties
+            // TODO: add jackson annotation
+            project.setPptConfig(FormatCoverter.convertJsonToObject(PROS.getProperty(APPCONFIG_PPT_TEMPLATE_CONFIG), PPTConfig.class));
+            // assign the customized properties override
+            // TODO: consider how to replace the properties
+            // TODO: or consider won't use the customized file
+            LOGGER.info("Parse template config successfully.");
+            project = DataSourceFactory.loadProjectData(datasourceType, project);
+            PPTFactory.genPPT(pptTemplatePath, project);
         } catch (InvalidFormatException e) {
             e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         } catch (DataSourceException e) {
+            e.printStackTrace();
+        } catch (PPTException e) {
             e.printStackTrace();
         }
 

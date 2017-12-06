@@ -1,5 +1,6 @@
 package com.guanglin.pptGen.model;
 
+import com.guanglin.pptGen.model.pptConfig.PPTConfig;
 import lombok.Data;
 
 import java.util.List;
@@ -21,4 +22,5 @@ class Project {
     private String owner;
     private List<Item> items;
     private String captureFolderPath;
+    private PPTConfig pptConfig;
 }

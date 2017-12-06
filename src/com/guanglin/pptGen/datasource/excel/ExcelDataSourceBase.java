@@ -20,29 +20,29 @@ import java.util.Map;
  */
 public abstract class ExcelDataSourceBase extends DataSourceBase {
 
-    protected final static int titleRowIndex = 3;
+    protected final static int titleRowIndex = 2;
 
     protected final static Map<String, String> fields = new HashMap<String, String>();
 
     static {
-        fields.put("A", "编号");
-        fields.put("B", "项目名称");
-        fields.put("C", "区域");
-        fields.put("D", "位置描述");
-        fields.put("F", "社区分类");
-        fields.put("E", "租售均价");
-        fields.put("G", "社区居住规模");
-        fields.put("H", "入住率");
-        fields.put("I", "各社区受众描述");
-        fields.put("J", "楼层");
-        fields.put("K", "门洞数");
-        fields.put("L", "电梯总数");
-        fields.put("M", "等候厅数");
-        fields.put("N", "合同数");
-        fields.put("O", "实际数");
-        fields.put("P", "楼号细分");
-        fields.put("Q", "广告发布日期");
-        fields.put("R", "检测日期");
+        fields.put("A3", "编号");
+        fields.put("B3", "项目名称");
+        fields.put("C3", "区域");
+        fields.put("D3", "位置描述");
+        fields.put("E3", "社区分类");
+        fields.put("F3", "租售均价");
+        fields.put("G3", "社区居住规模");
+        fields.put("H3", "入住率");
+        fields.put("I3", "各社区内受众描述");
+        fields.put("J3", "楼层");
+        fields.put("K3", "门洞数");
+        fields.put("L3", "电梯总数");
+        fields.put("M3", "等候厅数");
+        fields.put("N3", "合同数");
+        fields.put("O3", "实际数");
+        fields.put("P3", "楼号细分");
+        fields.put("Q3", "广告发布日期");
+        fields.put("R3", "监测日期");
     }
 
     protected Workbook workbook;
@@ -65,6 +65,6 @@ public abstract class ExcelDataSourceBase extends DataSourceBase {
         }
     }
 
-    protected abstract List<Item> extractItemsFromWorkbook() throws ExcelValidationException;
+    protected abstract List<Item> extractItemsFromWorkbook() throws ExcelValidationException, DataSourceException;
 
 }

@@ -1,0 +1,44 @@
+{
+  "firstSlideConfig": {
+    "fontConfig": {
+      "family": "",
+      "size": "",
+      "color": "",
+      "style": "",
+      "content": ""
+    },
+    "imageConfig": {
+      "size": 3,
+      "height": "1000",
+      "width": "1000"
+    }
+  },
+  "otherSlideConfig": {
+    "fontConfig": {
+      "family": "宋体,黑体,12px",
+      "size": "",
+      "color": "",
+      "style": "",
+      "content": ""
+    },
+    "imageConfig": {
+      "size": "3",
+      "height": "1000",
+      "width": "1000"
+    }
+  },
+  "lastSlideConfig": {
+    "fontConfig": {
+      "family": "",
+      "size": "",
+      "color": "",
+      "style": "",
+      "content": ""
+    },
+    "imageConfig": {
+      "size": "0",
+      "height": "1000",
+      "width": "1000"
+    }
+  }
+}

@@ -3,6 +3,8 @@ package com.guanglin.pptGen.datasource;
 import com.guanglin.pptGen.datasource.excel.XlsxDataSource;
 import com.guanglin.pptGen.exception.DataSourceException;
 import com.guanglin.pptGen.model.Project;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 
 import java.io.FileInputStream;
@@ -16,6 +18,8 @@ import static com.guanglin.pptGen.Constants.PROS;
  * Created by pengyao on 01/06/2017.
  */
 public class DataSourceFactory {
+
+    private static Logger LOGGER = LogManager.getLogger("DataSourceFactory");
 
     public static Project loadProjectData(String datasourceType, Project project) throws
             IOException,
@@ -33,7 +37,7 @@ public class DataSourceFactory {
             case "database":
                 break;
         }
-        if(datasource != null) {
+        if (datasource != null) {
             datasource.mapProjectItemData();
         }
 

@@ -13,7 +13,7 @@ import java.io.FileOutputStream;
  * <p>
  * Created by pengyao on 30/05/2017.
  */
-public abstract class HanlderBase {
+public abstract class HanlderBase<S,P> {
 
     protected FileInputStream templateFileStream;
     protected Project project;
