@@ -12,7 +12,7 @@ public @Data
 class Item {
     private Capture outsideCapture;
     private String description;
-    private Stack<Capture> insideCaptures;
+    private Stack<Capture> insideCaptures = new Stack<>();
     private Map<String, String> fields;
 
     public int getInsideImageCounts() {

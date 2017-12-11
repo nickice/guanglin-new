@@ -1,5 +1,6 @@
 package com.guanglin.pptGen.model;
 
+import com.guanglin.pptGen.Constants;
 import com.guanglin.pptGen.model.pptConfig.PPTConfig;
 import lombok.Data;
 
@@ -19,8 +20,19 @@ class Project {
      * 3. one project has one folder path
      */
 
-    private String owner;
+    private String name;
+    private String projectPath;
+    private String projectPPTTemplatePath;
+    private String projectOutputPath;
     private List<Item> items;
     private String captureFolderPath;
     private PPTConfig pptConfig;
+
+    public String getprojectPPTTemplatePath() {
+        return this.projectPath + Constants.PRO_TEMPLATE_PATH;
+    }
+
+    public String getProjectOutputPath() {
+        return this.projectPath + Constants.PRO_OUTPUT_PATH;
+    }
 }

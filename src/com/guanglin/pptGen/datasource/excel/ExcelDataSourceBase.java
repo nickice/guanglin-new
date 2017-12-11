@@ -51,7 +51,6 @@ public abstract class ExcelDataSourceBase extends DataSourceBase {
     public ExcelDataSourceBase(Project project, FileInputStream excelInputStream)
             throws IOException, InvalidFormatException {
         super(project);
-        this.workbook = WorkbookFactory.create(excelInputStream);
     }
 
     @Override

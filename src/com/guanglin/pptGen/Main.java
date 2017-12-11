@@ -2,118 +2,112 @@ package com.guanglin.pptGen;
 
 import com.google.common.base.Strings;
 import com.guanglin.pptGen.datasource.DataSourceFactory;
-import com.guanglin.pptGen.exception.DataSourceException;
-import com.guanglin.pptGen.exception.PPTException;
+import com.guanglin.pptGen.exception.ProjectValidationException;
+import com.guanglin.pptGen.model.Capture;
+import com.guanglin.pptGen.model.Item;
 import com.guanglin.pptGen.model.Project;
-import com.guanglin.pptGen.model.pptConfig.PPTConfig;
 import com.guanglin.pptGen.pptUtility.PPTFactory;
-import com.guanglin.pptGen.utils.FormatCoverter;
+import lombok.NonNull;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
-import static com.guanglin.pptGen.Constants.APPCONFIG_PPT_TEMPLATE_CONFIG;
-import static com.guanglin.pptGen.Constants.APPCONFIG_PPT_TEMPLATE_PATH;
 import static com.guanglin.pptGen.Constants.APPCONFIG_PRO_NAME;
+import static com.guanglin.pptGen.Constants.APPCONFIG_PRO_PATH;
 import static com.guanglin.pptGen.Constants.DATASOURCE_TYPE;
 import static com.guanglin.pptGen.Constants.PROS;
+import static com.guanglin.pptGen.Constants.PRO_CONFIG_PATH;
+import static com.guanglin.pptGen.Constants.PRO_DATA_PATH;
+import static com.guanglin.pptGen.Constants.PRO_IMG_OUTDORR_PATH;
+import static com.guanglin.pptGen.Constants.PRO_IMG_PATH;
+import static com.guanglin.pptGen.Constants.PRO_OUTPUT_PATH;
+import static com.guanglin.pptGen.Constants.PRO_TEMPLATE_PATH;
 
 public class Main {
 
     private static Logger LOGGER = LogManager.getLogger("Main");
 
 
-    public final static String ARG_NAME_HELP = "help";
-    public final static String ARG_NAME_APPCONFIG = "appConfig";
-    public final static String ARG_NAME_TEMPLATE = "template";
-    public final static String ARG_NAME_PROCONFIG = "proConfig";
+    private final static String ARG_NAME_HELP = "help";
+    private final static String PROJECTPATH = "projectPath";
 
     private static Options argOpts = new Options();
 
     {
         argOpts.addOption(ARG_NAME_HELP, "打印帮助信息。");
-        argOpts.addOption(ARG_NAME_APPCONFIG, "设置启动配置路径（必须）");
-        argOpts.addOption(ARG_NAME_TEMPLATE, "设置PPT模版文件路径（必须）");
-        argOpts.addOption(ARG_NAME_PROCONFIG, "项目文件路径");
+        argOpts.addOption(PROJECTPATH, "设置启动配置路径（必须）");
+        argOpts.addOption(OptionBuilder.withArgName("projectPath=")
+                .hasArgs(2)
+                .withValueSeparator()
+                .withDescription("use value for given property")
+                .create());
     }
 
     public static void main(String[] args) {
 
-        String appConfigPath = "/Users/pengyao/Workspaces/personal/guanglin-new/configuration/app.config";
-        /*
+        // String appConfigPath = "/Users/pengyao/Workspaces/personal/guanglin-new/configuration/app.config";
+
         try {
             LOGGER.info("Start to parse the arguments");
             // parse the command line arguments
             CommandLineParser cmdParse = new DefaultParser();
             CommandLine cmdLine = cmdParse.parse(argOpts, args);
 
-            // print commnd help
-            if(cmdLine.hasOption(ARG_NAME_HELP)) {
+            // print command help
+            if (cmdLine.hasOption(ARG_NAME_HELP)) {
                 (new HelpFormatter()).printHelp("guanglin-new", argOpts);
-                return;
+                // return 0;
             }
-
-            // check the required config;
-            if(!cmdLine.hasOption(ARG_NAME_APPCONFIG) ) {
-                throw new ParseException("缺少启动配置或项目配置，请检查");
-            }
-            appConfigPath = cmdLine.getOptionValue(ARG_NAME_APPCONFIG);
+/**
+ // check the input args;
+ if (!cmdLine.hasOption(PROJECTPATH)) {
+ throw new ParseException("请输入项目路径。");
+ }
+ **/
+            String projectPath = args[0];
 
             LOGGER.info("End to parse the arguments");
 
-        } catch (ParseException e) {
-            LOGGER.fatal("Parse the command argumentsfailed", e);
-            return;
-        }
-        */
+            // load app config into PROS
+            if (!appInit(projectPath + PRO_CONFIG_PATH)) {
+                LOGGER.fatal("读取项目配置失败，请检查项目配置文件。");
+                // return -1;
+            }
 
-        if (!appInit(appConfigPath)) {
-            LOGGER.fatal("Config the app failed.");
-        }
-
-
-        try {
             Project project = new Project();
+
+            project.setProjectPath(projectPath);
+
             // assign the project name
-            project.setOwner(PROS.getProperty(APPCONFIG_PRO_NAME));
+            project.setName(PROS.getProperty(APPCONFIG_PRO_NAME));
+
+            // project path
+            validateProjectConstuctor(projectPath);
 
             // assign data source setting
-            String datasourceType = (String) PROS.get(DATASOURCE_TYPE);
+            final String datasourceType = PROS.getProperty(DATASOURCE_TYPE);
 
-            // assign the template path
-            String pptTemplatePath = (String) PROS.getProperty(APPCONFIG_PPT_TEMPLATE_PATH);
-            // assign the  template properties
-            // TODO: add jackson annotation
-            project.setPptConfig(FormatCoverter.convertJsonToObject(PROS.getProperty(APPCONFIG_PPT_TEMPLATE_CONFIG), PPTConfig.class));
-            // assign the customized properties override
-            // TODO: consider how to replace the properties
-            // TODO: or consider won't use the customized file
             LOGGER.info("Parse template config successfully.");
             project = DataSourceFactory.loadProjectData(datasourceType, project);
-            PPTFactory.genPPT(pptTemplatePath, project);
-        } catch (InvalidFormatException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (DataSourceException e) {
-            e.printStackTrace();
-        } catch (PPTException e) {
-            e.printStackTrace();
+            loadCaptures(projectPath, project);
+            PPTFactory.genPPT(project);
+        } catch (Exception ex) {
+            LOGGER.error(ex);
+            // return -1;
         }
 
-        // read excel
-
+        // return 0;
 
     }
 
@@ -130,8 +124,95 @@ public class Main {
             return false;
         }
 
+    }
+
+    private static void validateProjectConstuctor(@NonNull String projectPath) throws ProjectValidationException {
+
+        // 1. the project path must exist
+        File projectFolder = new File(projectPath);
+        if (!projectFolder.exists() || !projectFolder.isDirectory()) {
+            throw new ProjectValidationException("Project Folder doesn't exist");
+        }
+
+        // 2. the data folder must exist
+        File dataFolder = new File(projectPath + PRO_DATA_PATH);
+        if (!dataFolder.exists() || !dataFolder.isDirectory()) {
+            throw new ProjectValidationException("Project/data Folder doesn't exist");
+        }
+
+        // 3. the images must exist
+        File imageFolder = new File(projectPath + PRO_IMG_PATH);
+        if (!imageFolder.exists() || !imageFolder.isDirectory()) {
+            throw new ProjectValidationException("Project/image Folder doesn't exist");
+        }
+
+        // 4. the template file must exist
+        File templateFile = new File(projectPath + PRO_TEMPLATE_PATH);
+        if (!templateFile.exists()) {
+            throw new ProjectValidationException("Project/template.ppt doesn't exist");
+        }
+
+        // 5. create the output folder if it doesn't exist
+        File outputFolder = new File(projectPath + PRO_OUTPUT_PATH);
+        if (!outputFolder.exists()) {
+            outputFolder.mkdir();
+        }
+
+        // 6. the template file must exist
+        File configFile = new File(projectPath + PRO_CONFIG_PATH);
+        if (!configFile.exists()) {
+            throw new ProjectValidationException("Project/project.ppt doesn't exist");
+        }
 
     }
 
+    private static void loadCaptures(@NonNull String projectPath, @NonNull Project project) throws ProjectValidationException {
+
+        final String projectImageDirPath = projectPath + PRO_IMG_PATH;
+        final String itemImageOurdoorPath = projectImageDirPath + "/" + PRO_IMG_OUTDORR_PATH;
+
+        // ensure the item image folder is existing
+        File prjectImageDir = new File(projectImageDirPath);
+        if (!prjectImageDir.exists()
+                || !prjectImageDir.isDirectory()
+                || prjectImageDir.listFiles().length == 0) {
+            throw new ProjectValidationException(String.format("% Folder doesn't exist", projectImageDirPath));
+        }
+
+        for (Item item : project.getItems()) {
+
+            if (Strings.isNullOrEmpty(item.getDescription())) {
+                continue;
+            }
+
+            // item folder
+            String itemImageDirPath = projectImageDirPath + "/" + item.getDescription();
+            File itemImageDir = new File(itemImageDirPath);
+
+            // check item image folders
+            if (!itemImageDir.exists()
+                    || !itemImageDir.isDirectory()
+                    || itemImageDir.listFiles().length == 0) {
+                throw new ProjectValidationException(String.format("%s image folder is no exist or empty. ", itemImageDirPath));
+            }
+
+            for (File f : itemImageDir.listFiles()) {
+                // set outdoor image
+                if (f.isDirectory()) {
+                    if (f.listFiles().length != 1) {
+                        throw new ProjectValidationException(String.format("%s image folder has problem", f.getPath()));
+                    }
+
+                    File outdoorImage = f.listFiles()[0];
+                    item.setOutsideCapture(new Capture(outdoorImage.getName(), outdoorImage.getAbsolutePath()));
+                    continue;
+                }
+
+                // loop to set indoor image
+                item.getInsideCaptures().add(new Capture(f.getName(), f.getAbsolutePath()));
+            }
+        }
+
+    }
 
 }

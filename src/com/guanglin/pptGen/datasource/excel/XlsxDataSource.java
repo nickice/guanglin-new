@@ -7,6 +7,7 @@ import com.guanglin.pptGen.model.Item;
 import com.guanglin.pptGen.model.Project;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -30,7 +31,7 @@ public class XlsxDataSource extends ExcelDataSourceBase {
         super(project, fileInputStream);
 
         // instance the xssfworkbook
-        this.xssfWorkbook = (XSSFWorkbook) super.workbook;
+        this.xssfWorkbook = new XSSFWorkbook(fileInputStream);
     }
 
     @Override
@@ -49,36 +50,39 @@ public class XlsxDataSource extends ExcelDataSourceBase {
             Row row = sheet.getRow(validRowIndex);
 
             // Convert the String to int successfully, then start to map the value to item
-            if (row.getCell(0).getNumericCellValue() > 0) {
+            if (row.getCell(0).getCellTypeEnum() == CellType.NUMERIC && row.getCell(0).getNumericCellValue() > 0) {
 
-                Map<String, String> tmpMap = new HashMap<>();
                 Item item = new Item();
-                for (Map.Entry<String, String> e : fields.entrySet()) {
+                Map<String, String> tmpMap = new HashMap<>();
 
+                int i = fields.size() - 1;
+                for (Map.Entry<String, String> e : fields.entrySet()) {
                     // foreach cells to get the values
-                    for (int i = 0; i < fields.size(); i++) {
-                        Cell cell = row.getCell(i);
-                        switch (cell.getCellTypeEnum()) {
-                            case STRING:
-                                tmpMap.put(e.getValue(), cell.getStringCellValue());
-                                break;
-                            case BOOLEAN:
-                                tmpMap.put(e.getValue(), Boolean.valueOf(cell.getBooleanCellValue()).toString());
-                                break;
-                            case NUMERIC:
-                                tmpMap.put(e.getValue(), Double.valueOf(cell.getNumericCellValue()).toString());
-                                break;
-                            case _NONE:
-                            case BLANK:
-                                tmpMap.put(e.getValue(), "");
-                                break;
-                            default:
-                                throw new DataSourceException("unknown data format.");
-                        }
+                    Cell cell = row.getCell(i);
+                    switch (cell.getCellTypeEnum()) {
+                        case STRING:
+                            tmpMap.put(e.getValue(), cell.getStringCellValue());
+                            break;
+                        case BOOLEAN:
+                            tmpMap.put(e.getValue(), Boolean.valueOf(cell.getBooleanCellValue()).toString());
+                            break;
+                        case NUMERIC:
+                            tmpMap.put(e.getValue(), Double.valueOf(cell.getNumericCellValue()).toString());
+                            break;
+                        case _NONE:
+                        case BLANK:
+                            tmpMap.put(e.getValue(), "");
+                            break;
+                        default:
+                            throw new DataSourceException("unknown data format.");
                     }
-                    // set the map
-                    item.setFields(tmpMap);
+                    if (e.getValue() == "项目名称") {
+                        item.setDescription(cell.getStringCellValue());
+                    }
+                    i--;
                 }
+
+                item.setFields(tmpMap);
                 itemsRet.add(item);
                 validRowIndex++;
             } else {
@@ -113,7 +117,7 @@ public class XlsxDataSource extends ExcelDataSourceBase {
                 String key = String.format("%s3", (char) (64 + i));
 
                 if (fields.get(key) == null
-                        || !cell.getStringCellValue().contains(fields.get(key))) {
+                        || !cell.getStringCellValue().replace(" ", "").contains(fields.get(key))) {
                     throw new ExcelValidationException(
                             String.format("字段[%s]名称[%s]不正确", key, cell.getStringCellValue()),
                             String.format("字段[%s]应该是[%s]", key, fields.get(key))

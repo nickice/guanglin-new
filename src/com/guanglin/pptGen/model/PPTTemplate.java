@@ -2,6 +2,7 @@ package com.guanglin.pptGen.model;
 
 import lombok.Data;
 
+import java.util.Map;
 import java.util.Queue;
 
 /**
@@ -17,6 +18,8 @@ class PPTTemplate<T> {
     private String templateFileName;
 
     private Queue<T> slidesQueue;
+
+    private Map<Integer, T> templateSlideMap;
 
     private String outputFileName;
 
