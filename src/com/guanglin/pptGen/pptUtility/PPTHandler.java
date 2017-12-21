@@ -14,6 +14,8 @@ import org.apache.poi.hslf.usermodel.HSLFSlide;
 import org.apache.poi.hslf.usermodel.HSLFSlideShow;
 import org.apache.poi.hslf.usermodel.HSLFSlideShowImpl;
 import org.apache.poi.hslf.usermodel.HSLFTextBox;
+import org.apache.poi.hslf.usermodel.HSLFTextParagraph;
+import org.apache.poi.hslf.usermodel.HSLFTextRun;
 import org.apache.poi.sl.usermodel.PictureData;
 import org.apache.poi.sl.usermodel.ShapeType;
 
@@ -129,23 +131,24 @@ public class PPTHandler extends HanlderBase {
                 if (item.getInsideCaptures().size() % 3 == 0) {
                     //  template 1
                     LOGGER.debug("use 2 images template to deal with the outdoor image.");
-                    buildSlide((HSLFSlide) this.template.getTemplateSlideMap().get(2), item, true);
-                    buildSlide((HSLFSlide) this.template.getTemplateSlideMap().get(2), item, false);
+                    buildSlide((HSLFSlide) this.template.getTemplateSlideMap().get(1), item, true);
+                    buildSlide((HSLFSlide) this.template.getTemplateSlideMap().get(1), item, false);
                 } else if (item.getInsideCaptures().size() % 3 == 1) {
                     // template 2
                     LOGGER.debug("use 2 images template to deal with the outdoor image.");
-                    buildSlide((HSLFSlide) this.template.getTemplateSlideMap().get(2), item, true);
+                    buildSlide((HSLFSlide) this.template.getTemplateSlideMap().get(1), item, true);
                 } else if (item.getInsideCaptures().size() % 3 == 2) {
-                    // template 1,2
+                    // template 2
                     LOGGER.debug("use 1 image template to deal with the outdoor image.");
                     buildSlide((HSLFSlide) this.template.getTemplateSlideMap().get(1), item, true);
-                    buildSlide((HSLFSlide) this.template.getTemplateSlideMap().get(2), item, false);
+                    buildSlide((HSLFSlide) this.template.getTemplateSlideMap().get(1), item, false);
+                    buildSlide((HSLFSlide) this.template.getTemplateSlideMap().get(1), item, false);
                 }
 
                 LOGGER.debug("start to use 3 images template to deal with item indoor captures, size is " + item.getInsideCaptures().size());
                 while (!item.getInsideCaptures().empty()) {
                     // template 3
-                    buildSlide((HSLFSlide) this.template.getTemplateSlideMap().get(3), item, false);
+                    buildSlide((HSLFSlide) this.template.getTemplateSlideMap().get(2), item, false);
                 }
             }
 
@@ -170,7 +173,7 @@ public class PPTHandler extends HanlderBase {
             byte[] templateBackgroundData = templateSlide.getBackground().getFill().getPictureData().getRawData();
             PictureData.PictureType pictureType = templateSlide.getBackground().getFill().getPictureData().getType();
             HSLFPictureData pictureData = generatedShow.addPicture(templateBackgroundData, pictureType);
-            slide.getBackground().getFill().setFillType(HSLFFill.FILL_PATTERN);
+            slide.getBackground().getFill().setFillType(HSLFFill.FILL_PICTURE);
             slide.getBackground().getFill().setPictureData(pictureData);
 
         }
@@ -198,12 +201,39 @@ public class PPTHandler extends HanlderBase {
             } else if (shape instanceof HSLFTextBox) {
                 // set the description
                 LOGGER.debug("start to build text shape ");
-                HSLFTextBox templateTextBox = ((HSLFTextBox) shape);
+                HSLFTextBox templateTextBox = (HSLFTextBox) shape;
                 String originalText = templateTextBox.getText();
-                //TODO: need to test on chinese ppt
-                templateTextBox.setText(replacedItemText(item, originalText));
-                slide.addShape(templateTextBox);
+                HSLFTextBox newTextBox = new HSLFTextBox();
+                newTextBox.setText(replacedItemText(item, originalText));
+                newTextBox.setAnchor(templateTextBox.getAnchor());
 
+                for (int i = 0; i < newTextBox.getTextParagraphs().size(); i++) {
+                    HSLFTextParagraph textParagraph = newTextBox.getTextParagraphs().get(i);
+                    HSLFTextParagraph templateParagragh = templateTextBox.getTextParagraphs().get(i);
+
+                    // textParagraph.setParagraphStyle(templateTextBox.getTextParagraphs().get(i).getParagraphStyle());
+                    LOGGER.debug("raw data:" + HSLFTextParagraph.getRawText(newTextBox.getTextParagraphs()));
+                    LOGGER.debug("test run size:" + textParagraph.getTextRuns().size());
+
+                    for (int n = 0; n < textParagraph.getTextRuns().size(); n++) {
+                        textParagraph.getTextRuns().get(n).setFontFamily(templateParagragh.getTextRuns().get(n).getFontFamily());
+                        textParagraph.getTextRuns().get(n).setFontSize(templateParagragh.getTextRuns().get(n).getFontSize());
+                        textParagraph.getTextRuns().get(n).setBold(templateParagragh.getTextRuns().get(n).isBold());
+                        textParagraph.getTextRuns().get(n).setFontColor(templateParagragh.getTextRuns().get(n).getFontColor());
+                        textParagraph.getTextRuns().get(n).setCharacterStyle(templateParagragh.getTextRuns().get(n).getCharacterStyle());
+
+                    }
+
+
+                    for (HSLFTextRun textRun : textParagraph.getTextRuns()) {
+                        LOGGER.debug("font size:" + textRun.getFontSize());
+                        LOGGER.debug("font family:" + textRun.getFontFamily());
+                        LOGGER.debug("raw text" + textRun.getRawText());
+                    }
+
+                }
+
+                slide.addShape(newTextBox);
             } else {
                 throw new PPTException("致命错误：第一幻灯片中存在一个未知的图形");
             }
