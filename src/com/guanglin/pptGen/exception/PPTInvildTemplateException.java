@@ -7,8 +7,12 @@ package com.guanglin.pptGen.exception;
  */
 public class PPTInvildTemplateException extends PPTException {
 
-    public PPTInvildTemplateException(String message) {
-        super(message);
+    public PPTInvildTemplateException(final String msg) {
+        super(msg);
+    }
+
+    public PPTInvildTemplateException(final String msg, Exception ex) {
+        super(msg, ex);
     }
 
 }

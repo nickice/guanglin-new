@@ -12,8 +12,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 
-import static com.guanglin.pptGen.Constants.DATASOURCE_EXCEL_FOLDER;
-import static com.guanglin.pptGen.Constants.PROS;
 import static com.guanglin.pptGen.Constants.PRO_DATA_PATH;
 
 /**
@@ -30,15 +28,19 @@ public class DataSourceFactory {
 
         DataSourceBase datasource = null;
 
+        LOGGER.info("开始读取数据内容.");
         switch (datasourceType) {
             case "excel":
-                File excelFilePath = new File(project.getProjectPath() + PRO_DATA_PATH);
-                File[] excelFile = excelFilePath.listFiles();
-                if (excelFile == null || excelFile.length == 0) {
-                    throw new ProjectException("no excel file found");
+                String excelFilePath = project.getProjectPath() + PRO_DATA_PATH;
+                LOGGER.info("数据文件地址:" + excelFilePath);
+
+                File excelFile = new File(excelFilePath);
+                File[] excelFiles = excelFile.listFiles();
+                if (excelFile == null || excelFiles.length == 0) {
+                    throw new ProjectException("没有在项目目录下找到数据文件。");
                 }
 
-                FileInputStream fileInputStream = new FileInputStream(excelFile[0]);
+                FileInputStream fileInputStream = new FileInputStream(excelFiles[0]);
                 datasource = new XlsxDataSource(project, fileInputStream);
                 break;
             case "database":

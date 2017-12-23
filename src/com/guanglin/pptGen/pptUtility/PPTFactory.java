@@ -1,21 +1,23 @@
 package com.guanglin.pptGen.pptUtility;
 
-
 import com.guanglin.pptGen.exception.PPTException;
 import com.guanglin.pptGen.exception.PPTInvildTemplateException;
 import com.guanglin.pptGen.model.Project;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.IOException;
 
 
 /**
  * Created by pengyao on 30/05/2017.
  */
 public class PPTFactory {
+
+    private final static Logger LOGGER = LogManager.getLogger("PPTFactory");
+
     public static void genPPT(Project project) throws
             PPTException {
 
@@ -35,19 +37,20 @@ public class PPTFactory {
                 throw new PPTInvildTemplateException("模版的文件格式不正确，请使用.ppt 或者 .pptx 文件模版");
             }
 
-            File outputFile = new File(project.getProjectOutputPath() + project.getName() + ".ppt");
-            if (!outputFile.exists()) {
-                outputFile.createNewFile();
+            final String outputFilePath = project.getProjectOutputPath() + "/" + project.getName() + ".ppt";
+            File outputFile = new File(outputFilePath);
+            if (outputFile.exists()) {
+                outputFile.delete();
             }
 
+            outputFile.createNewFile();
             FileOutputStream outputStream = new FileOutputStream(outputFile, false);
             handler.writePPTFileStream(outputStream);
 
+            LOGGER.info("新生成的PPT文件：" + outputFilePath);
 
-        } catch (FileNotFoundException ex) {
-            throw new PPTInvildTemplateException("找不到相应的模版文件。");
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (Exception ex) {
+            throw new PPTInvildTemplateException("找不到相应的模版文件。", ex);
         }
 
     }

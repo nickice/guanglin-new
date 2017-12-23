@@ -38,8 +38,8 @@ public abstract class ExcelDataSourceBase extends DataSourceBase {
         fields.put("K3", "门洞数");
         fields.put("L3", "电梯总数");
         fields.put("M3", "等候厅数");
-        fields.put("N3", "合同数");
-        fields.put("O3", "实际数");
+        fields.put("N3", "合同数量");
+        fields.put("O3", "实际数量");
         fields.put("P3", "楼号细分");
         fields.put("Q3", "广告发布日期");
         fields.put("R3", "监测日期");

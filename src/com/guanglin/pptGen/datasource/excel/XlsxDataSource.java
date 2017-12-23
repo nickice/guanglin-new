@@ -5,6 +5,9 @@ import com.guanglin.pptGen.exception.DataSourceException;
 import com.guanglin.pptGen.exception.ExcelValidationException;
 import com.guanglin.pptGen.model.Item;
 import com.guanglin.pptGen.model.Project;
+import com.guanglin.pptGen.utils.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
@@ -26,6 +29,8 @@ import java.util.Map;
 public class XlsxDataSource extends ExcelDataSourceBase {
     private XSSFWorkbook xssfWorkbook;
 
+    private final static Logger LOGGER = LogManager.getLogger("XlsxDataSource");
+
     public XlsxDataSource(Project project, FileInputStream fileInputStream)
             throws IOException, InvalidFormatException {
         super(project, fileInputStream);
@@ -37,6 +42,7 @@ public class XlsxDataSource extends ExcelDataSourceBase {
     @Override
     protected List<Item> extractItemsFromWorkbook() throws ExcelValidationException, DataSourceException {
 
+        LOGGER.debug("start to extract the project items from the workbook.");
         // check the workbook contains the required fields and values
         ValidateWorkbookContent();
 
@@ -61,13 +67,19 @@ public class XlsxDataSource extends ExcelDataSourceBase {
                     Cell cell = row.getCell(i);
                     switch (cell.getCellTypeEnum()) {
                         case STRING:
-                            tmpMap.put(e.getValue(), cell.getStringCellValue());
+                            tmpMap.put(e.getValue(), StringUtils.trim(cell.getStringCellValue()));
                             break;
                         case BOOLEAN:
                             tmpMap.put(e.getValue(), Boolean.valueOf(cell.getBooleanCellValue()).toString());
                             break;
                         case NUMERIC:
-                            tmpMap.put(e.getValue(), Double.valueOf(cell.getNumericCellValue()).toString());
+                            // judge the value has dot part
+                            if(cell.getNumericCellValue() - (int)cell.getNumericCellValue() != 0) {
+                                tmpMap.put(e.getValue(), Double.valueOf(cell.getNumericCellValue()).toString());
+                            }
+                            else {
+                                tmpMap.put(e.getValue(), Integer.valueOf((int)cell.getNumericCellValue()).toString());
+                            }
                             break;
                         case _NONE:
                         case BLANK:
@@ -91,6 +103,7 @@ public class XlsxDataSource extends ExcelDataSourceBase {
 
         } while (validRowIndex > 0);
 
+        LOGGER.debug("extract the project items done.");
         return itemsRet;
     }
 

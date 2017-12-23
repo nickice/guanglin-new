@@ -11,7 +11,14 @@ import java.util.Stack;
 /**
  * Created by pengyao on 02/07/2017.
  */
-public class ProjectFactory {
+public class ProjectBuilder {
+
+
+    /*
+    public static Project builder() {
+
+    }
+    */
 
     private static Project mapCaptures(Project project, String captureFolderPath) throws ProjectException {
 

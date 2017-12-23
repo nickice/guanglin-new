@@ -5,7 +5,11 @@ package com.guanglin.pptGen.exception;
  */
 public class PPTException extends Exception {
 
-    public PPTException(String msg) {
+    public PPTException(final String msg) {
         super(msg);
+    }
+
+    public PPTException(final String msg, Exception ex) {
+        super(msg, ex);
     }
 }

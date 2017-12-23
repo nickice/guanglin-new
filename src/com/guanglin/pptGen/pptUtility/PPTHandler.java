@@ -34,6 +34,7 @@ public class PPTHandler extends HanlderBase {
 
     private HSLFSlideShow templateShow = null;
     private HSLFSlideShow generatedShow = null;
+    private String fontFamily = null;
 
     public PPTHandler(FileInputStream templateStream, Project project) {
         super(templateStream, project);
@@ -69,7 +70,7 @@ public class PPTHandler extends HanlderBase {
     @Override
     protected void validateTemplate() throws PPTException {
 
-        LOGGER.info("start to validate PPT template");
+        LOGGER.debug("start to validate PPT template");
         // 1. the slide count should be greater than 1
         if (this.templateShow.getSlides() == null ||
                 this.templateShow.getSlides().size() < 2) {
@@ -109,13 +110,14 @@ public class PPTHandler extends HanlderBase {
                 throw new PPTException(String.format("致命错误：这个模版第%i幻灯片不包含文本输入", slideIndex));
             }
         }
-        LOGGER.info("end to validate PPT template");
+        LOGGER.debug("end to validate PPT template");
     }
 
     @Override
     protected void generateOutputSlide() throws PPTException {
 
-        LOGGER.info("start to generate output slide");
+        LOGGER.info("****  开始生成项目ppt文件  ****");
+        LOGGER.debug("start to generate output slide");
         generatedShow = new HSLFSlideShow();
 
         try {
@@ -123,9 +125,8 @@ public class PPTHandler extends HanlderBase {
             // foreach the items
             for (Item item : this.project.getItems()) {
 
-                LOGGER.info("start to deal with item: " + item.getDescription());
-                LOGGER.debug("item name: " + item.getDescription());
-                LOGGER.debug("item capture size: " + item.getInsideCaptures().size());
+                int slideCount = 0;
+                int insideCaptureCount = item.getInsideCaptures().size();
 
                 // if the image less than 3
                 if (item.getInsideCaptures().size() % 3 == 0) {
@@ -133,28 +134,34 @@ public class PPTHandler extends HanlderBase {
                     LOGGER.debug("use 2 images template to deal with the outdoor image.");
                     buildSlide((HSLFSlide) this.template.getTemplateSlideMap().get(1), item, true);
                     buildSlide((HSLFSlide) this.template.getTemplateSlideMap().get(1), item, false);
+                    slideCount = slideCount + 2;
                 } else if (item.getInsideCaptures().size() % 3 == 1) {
-                    // template 2
+                    // template 1
                     LOGGER.debug("use 2 images template to deal with the outdoor image.");
                     buildSlide((HSLFSlide) this.template.getTemplateSlideMap().get(1), item, true);
+                    slideCount++;
                 } else if (item.getInsideCaptures().size() % 3 == 2) {
                     // template 2
-                    LOGGER.debug("use 1 image template to deal with the outdoor image.");
-                    buildSlide((HSLFSlide) this.template.getTemplateSlideMap().get(1), item, true);
-                    buildSlide((HSLFSlide) this.template.getTemplateSlideMap().get(1), item, false);
-                    buildSlide((HSLFSlide) this.template.getTemplateSlideMap().get(1), item, false);
+                    LOGGER.debug("use 2 image template to deal with the outdoor image.");
+                    buildSlide((HSLFSlide) this.template.getTemplateSlideMap().get(2), item, true);
+                    slideCount++;
                 }
 
                 LOGGER.debug("start to use 3 images template to deal with item indoor captures, size is " + item.getInsideCaptures().size());
                 while (!item.getInsideCaptures().empty()) {
                     // template 3
                     buildSlide((HSLFSlide) this.template.getTemplateSlideMap().get(2), item, false);
+                    slideCount++;
                 }
+
+                LOGGER.info("社区: " + item.getDescription() + ";");
+                LOGGER.info("--生成幻灯片：" + slideCount + "张;");
+                LOGGER.info("--内景图片数量: " + insideCaptureCount);
             }
 
         } catch (Exception ex) {
             LOGGER.error(ex);
-            throw new PPTException("致命错误：构造PPTX时失败了。");
+            throw new PPTException("致命错误：生成PPT时失败了。", ex);
         }
 
     }
@@ -168,6 +175,7 @@ public class PPTHandler extends HanlderBase {
         //region set background
         if (templateSlide.getBackground().getShapeType() == ShapeType.RECT) {
 
+            // TODO: investigate how to set background
             LOGGER.debug("start to set background.");
             slide.setFollowMasterBackground(false);
             byte[] templateBackgroundData = templateSlide.getBackground().getFill().getPictureData().getRawData();
@@ -211,9 +219,7 @@ public class PPTHandler extends HanlderBase {
                     HSLFTextParagraph textParagraph = newTextBox.getTextParagraphs().get(i);
                     HSLFTextParagraph templateParagragh = templateTextBox.getTextParagraphs().get(i);
 
-                    // textParagraph.setParagraphStyle(templateTextBox.getTextParagraphs().get(i).getParagraphStyle());
-                    LOGGER.debug("raw data:" + HSLFTextParagraph.getRawText(newTextBox.getTextParagraphs()));
-                    LOGGER.debug("test run size:" + textParagraph.getTextRuns().size());
+                    textParagraph.setParagraphStyle(templateTextBox.getTextParagraphs().get(i).getParagraphStyle());
 
                     for (int n = 0; n < textParagraph.getTextRuns().size(); n++) {
                         textParagraph.getTextRuns().get(n).setFontFamily(templateParagragh.getTextRuns().get(n).getFontFamily());
@@ -221,14 +227,14 @@ public class PPTHandler extends HanlderBase {
                         textParagraph.getTextRuns().get(n).setBold(templateParagragh.getTextRuns().get(n).isBold());
                         textParagraph.getTextRuns().get(n).setFontColor(templateParagragh.getTextRuns().get(n).getFontColor());
                         textParagraph.getTextRuns().get(n).setCharacterStyle(templateParagragh.getTextRuns().get(n).getCharacterStyle());
-
                     }
 
-
+                    // print debug information
                     for (HSLFTextRun textRun : textParagraph.getTextRuns()) {
-                        LOGGER.debug("font size:" + textRun.getFontSize());
-                        LOGGER.debug("font family:" + textRun.getFontFamily());
-                        LOGGER.debug("raw text" + textRun.getRawText());
+                        LOGGER.debug("font size: " + textRun.getFontSize());
+                        LOGGER.debug("font family: " + textRun.getFontFamily());
+                        LOGGER.debug("raw text： " + textRun.getRawText());
+                        LOGGER.debug("text cap" + textRun.getTextCap());
                     }
 
                 }

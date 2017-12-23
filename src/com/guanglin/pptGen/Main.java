@@ -24,7 +24,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 
 import static com.guanglin.pptGen.Constants.APPCONFIG_PRO_NAME;
-import static com.guanglin.pptGen.Constants.APPCONFIG_PRO_PATH;
 import static com.guanglin.pptGen.Constants.DATASOURCE_TYPE;
 import static com.guanglin.pptGen.Constants.PROS;
 import static com.guanglin.pptGen.Constants.PRO_CONFIG_PATH;
@@ -59,7 +58,8 @@ public class Main {
         // String appConfigPath = "/Users/pengyao/Workspaces/personal/guanglin-new/configuration/app.config";
 
         try {
-            LOGGER.info("Start to parse the arguments");
+
+            LOGGER.debug("开始解析参数。");
             // parse the command line arguments
             CommandLineParser cmdParse = new DefaultParser();
             CommandLine cmdLine = cmdParse.parse(argOpts, args);
@@ -69,15 +69,8 @@ public class Main {
                 (new HelpFormatter()).printHelp("guanglin-new", argOpts);
                 // return 0;
             }
-/**
- // check the input args;
- if (!cmdLine.hasOption(PROJECTPATH)) {
- throw new ParseException("请输入项目路径。");
- }
- **/
+            LOGGER.debug("解析参数完成。");
             String projectPath = args[0];
-
-            LOGGER.info("End to parse the arguments");
 
             // load app config into PROS
             if (!appInit(projectPath + PRO_CONFIG_PATH)) {
@@ -88,26 +81,28 @@ public class Main {
             Project project = new Project();
 
             project.setProjectPath(projectPath);
+            LOGGER.info("项目目录地址：" + projectPath);
 
             // assign the project name
             project.setName(PROS.getProperty(APPCONFIG_PRO_NAME));
+            LOGGER.info("项目名称：" + PROS.getProperty(APPCONFIG_PRO_NAME));
 
             // project path
             validateProjectConstuctor(projectPath);
 
             // assign data source setting
             final String datasourceType = PROS.getProperty(DATASOURCE_TYPE);
+            LOGGER.info("项目数据类型：" + datasourceType);
 
-            LOGGER.info("Parse template config successfully.");
+            LOGGER.debug("Parse template config successfully.");
+
             project = DataSourceFactory.loadProjectData(datasourceType, project);
             loadCaptures(projectPath, project);
             PPTFactory.genPPT(project);
         } catch (Exception ex) {
-            LOGGER.error(ex);
-            // return -1;
+            LOGGER.error("遇到错误：" + ex);
+            ex.printStackTrace();
         }
-
-        // return 0;
 
     }
 

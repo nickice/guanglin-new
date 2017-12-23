@@ -5,7 +5,7 @@ package com.guanglin.pptGen.exception;
  */
 public class DataSourceException extends Exception {
 
-    public DataSourceException(String msg) {
+    public DataSourceException(final String msg) {
         super(msg);
     }
 
