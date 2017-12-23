@@ -1,20 +1,31 @@
-Goals:
-1. As an user, I want to load the data from my excel file or my database, the project name is the excel file name or "the table name".
-2. Each project has  multiple items, User wants to generate the slides for each item with the same style, and combine the slides into one ppt.
-3. User wants to configure the ppt style by himself.
-4. Generate ppt or pptx
-
-Designs:
-1. Using the ppt templates to create the new ppt, the benefit is we don't need to care about the ppt slide styles, we just need to generate the slides base on the
-template slides.
-2. Using template.config to allow the use to configurate the text output and format.
-3. Log the progress and show the errors to user.
-4. Using the interface for datasource, the configuration will tell us what datasource should be used.
 
 
+
+项目路径结构：
+
+-Project
+    |--data
+        |--dat.xls
+    |--output
+    |--template.ppt
+    |--item1
+        |--outdoor
+            |--itme1_outdoor.jpg
+        |--item1_indoor_image1.jpg
+        |--item1_indoor_image2.jpg
+        |--item1_indoor_image3.jpg
 
 
 References:
 http://poi.apache.org/slideshow/quick-guide.html
 https://poi.apache.org/apidocs/index.html
 http://www.cnblogs.com/hanfight/p/5721855.html
+
+
+TODO:
+1. test with chinese ppt
+2. backgound stuff.
+
+
+NODE:
+1. Excel 中的列名不能有空格

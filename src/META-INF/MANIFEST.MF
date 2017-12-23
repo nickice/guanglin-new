@@ -1,0 +1,5 @@
+Manifest-Version: 1.0
+Class-Path: lib/curvesapi-1.04.jar lib/xmlbeans-2.6.0.jar lib/guava-18.0.jar lib/poi-3.17.jar lib/poi-excelant-3.17.jar lib/poi-ooxml-3.17.jar lib/poi-ooxml-schemas-3.17.jar lib/poi-scratchpad-3.17.jar lib/lombok.jar
+ lib/commons-collections4-4.1.jar lib/log4j-1.2-api-2.10.0.jar lib/log4j-api-2.10.0.jar lib/log4j-appserver-2.10.0.jar lib/log4j-core-2.10.0.jar lib/commons-cli-1.4.jar lib/jackson-core-2.9.1.jar
+ lib/jackson-databind-2.7.4.jar lib/lombok.jar lib/guava-18.0.jar lib/jackson-annotations-2.7.4.jar lib/commons-codec-1.10.jar lib/commons-collections4-4.1.jar lib/commons-logging-1.2.jar
+Main-Class: com.guanglin.pptGen.Main
