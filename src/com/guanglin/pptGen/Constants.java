@@ -16,7 +16,7 @@ public class Constants {
     public final static String PRO_DATA_PATH = "/data";
     public final static String PRO_TEMPLATE_PATH = "/template.ppt";
     public final static String PRO_IMG_PATH = "/images";
-    public final static String PRO_IMG_OUTDORR_PATH = PRO_IMG_PATH + "/outdoor";
+    public final static String PRO_IMG_OUTDORR_PATH = "/outdoor";
     public final static String PRO_OUTPUT_PATH = "/output";
 
     public final static String DATASOURCE_TYPE = "guanglin.datesource";

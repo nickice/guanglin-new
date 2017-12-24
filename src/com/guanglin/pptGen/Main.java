@@ -1,5 +1,7 @@
 package com.guanglin.pptGen;
 
+import com.guanglin.pptGen.exception.ProjectValidationException;
+import com.guanglin.pptGen.model.Item;
 import com.guanglin.pptGen.model.Project;
 import com.guanglin.pptGen.pptUtility.PPTFactory;
 import com.guanglin.pptGen.project.ProjectBuilder;
@@ -67,6 +69,12 @@ public class Main {
 
             Project project = ProjectBuilder.build(projectPath);
             PPTFactory.genPPT(project);
+        } catch (ProjectValidationException pvEx) {
+            if (pvEx.getInvalidItems() != null && pvEx.getInvalidItems().size() > 0) {
+                for (Item item : pvEx.getInvalidItems().keySet()) {
+                    LOGGER.error(pvEx.getInvalidItems().get(item) + ": " + item.getDescription());
+                }
+            }
         } catch (Exception ex) {
             LOGGER.error("遇到错误：" + ex);
             ex.printStackTrace();

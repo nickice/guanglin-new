@@ -1,6 +1,7 @@
 package com.guanglin.pptGen.project;
 
 import com.google.common.base.Strings;
+import com.guanglin.pptGen.Constants;
 import com.guanglin.pptGen.datasource.DataSourceFactory;
 import com.guanglin.pptGen.exception.DataSourceException;
 import com.guanglin.pptGen.exception.ProjectException;
@@ -15,13 +16,14 @@ import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 import static com.guanglin.pptGen.Constants.APPCONFIG_PRO_NAME;
 import static com.guanglin.pptGen.Constants.DATASOURCE_TYPE;
 import static com.guanglin.pptGen.Constants.PROS;
 import static com.guanglin.pptGen.Constants.PRO_CONFIG_PATH;
 import static com.guanglin.pptGen.Constants.PRO_DATA_PATH;
-import static com.guanglin.pptGen.Constants.PRO_IMG_OUTDORR_PATH;
 import static com.guanglin.pptGen.Constants.PRO_IMG_PATH;
 import static com.guanglin.pptGen.Constants.PRO_OUTPUT_PATH;
 import static com.guanglin.pptGen.Constants.PRO_TEMPLATE_PATH;
@@ -100,22 +102,25 @@ public class ProjectBuilder {
 
     }
 
-
     private static void loadCaptures(@NonNull String projectPath, @NonNull Project project) throws ProjectValidationException {
 
+        LOGGER.debug("start to load captures");
+
         final String projectImageDirPath = projectPath + PRO_IMG_PATH;
-        final String itemImageOurdoorPath = projectImageDirPath + "/" + PRO_IMG_OUTDORR_PATH;
 
         // ensure the item image folder is existing
         File prjectImageDir = new File(projectImageDirPath);
         if (!prjectImageDir.exists()
                 || !prjectImageDir.isDirectory()
                 || prjectImageDir.listFiles().length == 0) {
-            throw new ProjectValidationException(String.format("% Folder doesn't exist", projectImageDirPath));
+            throw new ProjectValidationException(String.format("% 图片文件夹不存在，请检查", projectImageDirPath));
         }
+
+        Map<Item, String> invalidItems = new HashMap<Item, String>();
 
         for (Item item : project.getItems()) {
 
+            LOGGER.debug("load captures for item: " + item.getDescription());
             if (Strings.isNullOrEmpty(item.getDescription())) {
                 continue;
             }
@@ -128,26 +133,39 @@ public class ProjectBuilder {
             if (!itemImageDir.exists()
                     || !itemImageDir.isDirectory()
                     || itemImageDir.listFiles().length == 0) {
-                throw new ProjectValidationException(String.format("%s image folder is no exist or empty. ", itemImageDirPath));
+                //throw new ProjectValidationException(String.format("%s image folder is no exist or empty. ", itemImageDirPath));
+                invalidItems.put(item, "不存在图片文件夹");
+                continue;
             }
 
+            // check outdoor folder
+            File outdoorFolder = new File(itemImageDirPath + Constants.PRO_IMG_OUTDORR_PATH);
+
+            if (!outdoorFolder.exists()
+                    || !outdoorFolder.isDirectory()
+                    || outdoorFolder.listFiles().length != 1) {
+                //throw new ProjectValidationException(String.format("%s image folder is no exist or empty. ", itemImageDirPath));
+                invalidItems.put(item, "外景文件夹或者外景图片存在问题");
+                continue;
+            }
+
+            File outdoorImage = outdoorFolder.listFiles()[0];
+            item.setOutsideCapture(new Capture(outdoorImage.getName(), outdoorImage.getAbsolutePath()));
+
             for (File f : itemImageDir.listFiles()) {
-                // set outdoor image
-                if (f.isDirectory()) {
-                    if (f.listFiles().length != 1) {
-                        throw new ProjectValidationException(String.format("%s image folder has problem", f.getPath()));
-                    }
 
-                    File outdoorImage = f.listFiles()[0];
-                    item.setOutsideCapture(new Capture(outdoorImage.getName(), outdoorImage.getAbsolutePath()));
-                    continue;
+                if (f.isFile()) {
+                    // loop to set indoor image
+                    item.getInsideCaptures().add(new Capture(f.getName(), f.getAbsolutePath()));
                 }
-
-                // loop to set indoor image
-                item.getInsideCaptures().add(new Capture(f.getName(), f.getAbsolutePath()));
             }
         }
 
+        if (invalidItems.size() > 0) {
+            throw new ProjectValidationException("加载图片失败", invalidItems);
+        }
+
+        LOGGER.debug("load captures done.");
     }
 
 }

@@ -9,6 +9,6 @@ public class StringUtils {
             return s;
         }
 
-        return s.trim().replace("\n", "").replace("\r", "");
+        return s.trim().replace(" ", "").replace("\n", "").replace("\r", "");
     }
 }

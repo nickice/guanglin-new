@@ -89,7 +89,7 @@ public class XlsxDataSource extends ExcelDataSourceBase {
                             throw new DataSourceException("unknown data format.");
                     }
                     if (e.getValue() == "项目名称") {
-                        item.setDescription(cell.getStringCellValue());
+                        item.setDescription(StringUtils.trim(cell.getStringCellValue()));
                     }
                     i--;
                 }
