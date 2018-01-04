@@ -4,8 +4,10 @@ import com.guanglin.pptGen.exception.PPTException;
 import com.guanglin.pptGen.model.Item;
 import com.guanglin.pptGen.model.PPTTemplate;
 import com.guanglin.pptGen.model.Project;
+import com.guanglin.pptGen.utils.ObjectUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+import org.apache.poi.hslf.usermodel.HSLFAutoShape;
 import org.apache.poi.hslf.usermodel.HSLFFill;
 import org.apache.poi.hslf.usermodel.HSLFPictureData;
 import org.apache.poi.hslf.usermodel.HSLFPictureShape;
@@ -13,12 +15,15 @@ import org.apache.poi.hslf.usermodel.HSLFShape;
 import org.apache.poi.hslf.usermodel.HSLFSlide;
 import org.apache.poi.hslf.usermodel.HSLFSlideShow;
 import org.apache.poi.hslf.usermodel.HSLFSlideShowImpl;
+import org.apache.poi.hslf.usermodel.HSLFTable;
+import org.apache.poi.hslf.usermodel.HSLFTableCell;
 import org.apache.poi.hslf.usermodel.HSLFTextBox;
 import org.apache.poi.hslf.usermodel.HSLFTextParagraph;
-import org.apache.poi.hslf.usermodel.HSLFTextRun;
 import org.apache.poi.sl.usermodel.PictureData;
 import org.apache.poi.sl.usermodel.ShapeType;
+import org.apache.poi.sl.usermodel.TableCell;
 
+import java.awt.*;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -85,6 +90,7 @@ public class PPTHandler extends HanlderBase {
             throw new PPTException("致命错误：这个模版第一个幻灯片没有要求的图片样式。");
         }
 
+        /*
         // 3. each slide must have a text input sharp
         for (int i = 1; i < this.templateShow.getSlides().size(); i++) {
 
@@ -110,6 +116,7 @@ public class PPTHandler extends HanlderBase {
                 throw new PPTException(String.format("致命错误：这个模版第%i幻灯片不包含文本输入", slideIndex));
             }
         }
+        */
         LOGGER.debug("end to validate PPT template");
     }
 
@@ -119,6 +126,8 @@ public class PPTHandler extends HanlderBase {
         LOGGER.info("****  开始生成项目ppt文件  ****");
         LOGGER.debug("start to generate output slide");
         generatedShow = new HSLFSlideShow();
+        generatedShow.setPageSize(templateShow.getPageSize());
+
 
         try {
 
@@ -167,10 +176,11 @@ public class PPTHandler extends HanlderBase {
     }
 
 
-    private void buildSlide(HSLFSlide templateSlide, Item item, boolean setOutDoor) throws PPTException, IOException {
+    private void buildSlide(HSLFSlide templateSlide, Item item, boolean setOutDoor) throws Exception {
 
         // create a slide
         HSLFSlide slide = generatedShow.createSlide();
+
 
         //region set background
         if (templateSlide.getBackground().getShapeType() == ShapeType.RECT) {
@@ -178,12 +188,15 @@ public class PPTHandler extends HanlderBase {
             // TODO: investigate how to set background
             LOGGER.debug("start to set background.");
             slide.setFollowMasterBackground(false);
-            byte[] templateBackgroundData = templateSlide.getBackground().getFill().getPictureData().getRawData();
-            PictureData.PictureType pictureType = templateSlide.getBackground().getFill().getPictureData().getType();
-            HSLFPictureData pictureData = generatedShow.addPicture(templateBackgroundData, pictureType);
-            slide.getBackground().getFill().setFillType(HSLFFill.FILL_PICTURE);
-            slide.getBackground().getFill().setPictureData(pictureData);
-
+            if (templateSlide.getBackground() != null &&
+                    templateSlide.getBackground().getFill() != null &&
+                    templateSlide.getBackground().getFill().getPictureData() != null) {
+                byte[] templateBackgroundData = templateSlide.getBackground().getFill().getPictureData().getRawData();
+                PictureData.PictureType pictureType = templateSlide.getBackground().getFill().getPictureData().getType();
+                HSLFPictureData pictureData = generatedShow.addPicture(templateBackgroundData, pictureType);
+                slide.getBackground().getFill().setFillType(HSLFFill.FILL_PICTURE);
+                slide.getBackground().getFill().setPictureData(pictureData);
+            }
         }
         //endregion
 
@@ -219,7 +232,13 @@ public class PPTHandler extends HanlderBase {
                     HSLFTextParagraph textParagraph = newTextBox.getTextParagraphs().get(i);
                     HSLFTextParagraph templateParagragh = templateTextBox.getTextParagraphs().get(i);
 
-                    textParagraph.setParagraphStyle(templateTextBox.getTextParagraphs().get(i).getParagraphStyle());
+                    textParagraph.setParagraphStyle(templateParagragh.getParagraphStyle());
+                    textParagraph.setBulletStyle(templateParagragh.getBulletStyle());
+                    textParagraph.setBulletColor(templateParagragh.getBulletColor());
+                    textParagraph.setBulletChar(templateParagragh.getBulletChar());
+                    textParagraph.setIndent(templateParagragh.getIndent());
+                    textParagraph.setBulletSize(templateParagragh.getBulletSize());
+                    textParagraph.setIndentLevel(templateParagragh.getIndentLevel());
 
                     for (int n = 0; n < textParagraph.getTextRuns().size(); n++) {
                         textParagraph.getTextRuns().get(n).setFontFamily(templateParagragh.getTextRuns().get(n).getFontFamily());
@@ -230,18 +249,102 @@ public class PPTHandler extends HanlderBase {
                     }
 
                     // print debug information
+/*
                     for (HSLFTextRun textRun : textParagraph.getTextRuns()) {
-                        LOGGER.debug("font size: " + textRun.getFontSize());
-                        LOGGER.debug("font family: " + textRun.getFontFamily());
-                        LOGGER.debug("raw text： " + textRun.getRawText());
-                        LOGGER.debug("text cap" + textRun.getTextCap());
+                        if (textRun != null) {
+                            LOGGER.debug("font size: " + textRun.getFontSize());
+                            LOGGER.debug("font family: " + textRun.getFontFamily());
+                            LOGGER.debug("raw text： " + textRun.getRawText());
+                            LOGGER.debug("text cap" + textRun.getTextCap());
+                        }
                     }
-
+                    */
                 }
 
                 slide.addShape(newTextBox);
+            } else if (shape instanceof HSLFTable) {
+                HSLFTable templateTable = (HSLFTable) shape;
+                HSLFTable newTable = slide.createTable(templateTable.getNumberOfRows(), templateTable.getNumberOfColumns());
+                newTable.setAnchor(templateTable.getAnchor());
+                newTable.setShapeId(templateTable.getShapeId());
+
+                // loop the row and column
+                if (templateTable.getNumberOfRows() > 0 && templateTable.getNumberOfColumns() > 0) {
+                    for (int r = 0; r < templateTable.getNumberOfRows(); r++) {
+                        newTable.setRowHeight(r, templateTable.getRowHeight(r));
+                        for (int c = 0; c < templateTable.getNumberOfColumns(); c++) {
+                            // set the column style if the row index is 0
+                            if (r == 0) {
+                                newTable.setColumnWidth(c, templateTable.getColumnWidth(c));
+                            }
+
+                            if (templateTable.getCell(r, c) != null) {
+
+                                HSLFTableCell templateCell = templateTable.getCell(r, c);
+
+                                // replace content
+                                newTable.getCell(r, c).setText(replacedItemText(item, templateCell.getText()));
+                                ObjectUtils.copyPropertyByName("FillColor", templateCell, newTable.getCell(r, c));
+                                // set content style
+                                for (int n = 0; n < newTable.getCell(r, c).getTextParagraphs().size(); n++) {
+                                    if (templateCell.getTextParagraphs().get(n) != null && newTable.getCell(r, c).getTextParagraphs().get(n) != null) {
+                                        for (int m = 0; m < newTable.getCell(r, c).getTextParagraphs().get(n).getTextRuns().size(); m++) {
+                                            newTable.getCell(r, c).getTextParagraphs().get(n).getTextRuns().get(m).setFontColor(templateCell.getTextParagraphs().get(n).getTextRuns().get(m).getFontColor());
+                                            newTable.getCell(r, c).getTextParagraphs().get(n).getTextRuns().get(m).setFontFamily(templateCell.getTextParagraphs().get(n).getTextRuns().get(m).getFontFamily());
+                                            newTable.getCell(r, c).getTextParagraphs().get(n).getTextRuns().get(m).setFontSize(templateCell.getTextParagraphs().get(n).getTextRuns().get(m).getFontSize());
+                                            newTable.getCell(r, c).getTextParagraphs().get(n).getTextRuns().get(m).setBold(templateCell.getTextParagraphs().get(n).getTextRuns().get(m).isBold());
+                                        }
+                                    }
+                                }
+
+                                newTable.getCell(r, c).setLineColor(templateCell.getLineColor());
+                                newTable.getCell(r, c).setLineCompound(templateCell.getLineCompound());
+                                newTable.getCell(r, c).setLineDash(templateCell.getLineDash());
+                                newTable.getCell(r, c).setLineCap(templateCell.getLineCap());
+                                newTable.getCell(r, c).setLineHeadDecoration(templateCell.getLineHeadDecoration());
+                                newTable.getCell(r, c).setLineTailDecoration(templateCell.getLineTailDecoration());
+                                newTable.getCell(r, c).setLineBackgroundColor(templateCell.getLineBackgroundColor());
+                                newTable.getCell(r, c).setVerticalAlignment(templateCell.getVerticalAlignment());
+                                newTable.getCell(r, c).setAlignToBaseline(templateCell.isAlignToBaseline());
+
+                                // set the cell border style
+                                for (TableCell.BorderEdge borderEdge : TableCell.BorderEdge.values()) {
+                                    // if (templateCell.getBorderColor(borderEdge) != null) {
+                                    newTable.getCell(r, c).setBorderColor(borderEdge, Color.black);
+                                    //}
+
+                                    if (templateCell.getBorderCompound(borderEdge) != null) {
+                                        newTable.getCell(r, c).setBorderCompound(borderEdge, templateCell.getBorderCompound(borderEdge));
+                                    }
+
+                                    if (templateCell.getBorderStyle(borderEdge) != null) {
+                                        newTable.getCell(r, c).setBorderStyle(borderEdge, templateCell.getBorderStyle(borderEdge));
+                                    }
+
+                                    if (templateCell.getBorderDash(borderEdge) != null) {
+                                        newTable.getCell(r, c).setBorderDash(borderEdge, templateCell.getBorderDash(borderEdge));
+                                    }
+
+                                    if (templateCell.getBorderWidth(borderEdge) != null) {
+                                        newTable.getCell(r, c).setBorderWidth(borderEdge, templateCell.getBorderWidth(borderEdge));
+                                    }
+                                }
+
+                                // set anchor
+                                newTable.getCell(r, c).setAnchor(templateCell.getAnchor());
+                            }
+                        }
+                    }
+
+                }
+                slide.addShape(newTable);
+
+
+            } else if (shape instanceof HSLFAutoShape) {
+                slide.addShape((HSLFAutoShape) shape);
+
             } else {
-                throw new PPTException("致命错误：第一幻灯片中存在一个未知的图形");
+                LOGGER.error("致命错误：第一幻灯片中存在一个未知的图形: " + shape.getClass());
             }
 
         }
