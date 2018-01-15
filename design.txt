@@ -23,9 +23,27 @@ http://www.cnblogs.com/hanfight/p/5721855.html
 
 
 TODO:
-1. test with chinese ppt
-2. backgound stuff.
+1. 启动脚本
+1.1 自动生成项目文件夹
+1.2 自动copy外景图
+2. 大量图片内存问题
+2.1 考虑在生成ppt是加载图片而不是直接放到内存里
+3. 模版校验
+2.
+1. 表格：
+    a. 边框颜色
+    b. 边框样式复制
+2. 背景（小刘）稍后
+8. 小区名称校验 高 需要了解需要
 
 
 NODE:
-1. Excel 中的列名不能有空格
+
+
+Test TODO:
+1. Test to generate the ppt with lots of images
+2. Test to generate the ppt with
+
+
+Requirement:
+1. redesign the template validation logic, since not every template must have input text

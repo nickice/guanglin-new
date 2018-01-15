@@ -19,6 +19,7 @@ import org.apache.poi.hslf.usermodel.HSLFTable;
 import org.apache.poi.hslf.usermodel.HSLFTableCell;
 import org.apache.poi.hslf.usermodel.HSLFTextBox;
 import org.apache.poi.hslf.usermodel.HSLFTextParagraph;
+import org.apache.poi.hslf.usermodel.HSLFTextRun;
 import org.apache.poi.sl.usermodel.PictureData;
 import org.apache.poi.sl.usermodel.ShapeType;
 import org.apache.poi.sl.usermodel.TableCell;
@@ -233,12 +234,16 @@ public class PPTHandler extends HanlderBase {
                     HSLFTextParagraph templateParagragh = templateTextBox.getTextParagraphs().get(i);
 
                     textParagraph.setParagraphStyle(templateParagragh.getParagraphStyle());
-                    textParagraph.setBulletStyle(templateParagragh.getBulletStyle());
-                    textParagraph.setBulletColor(templateParagragh.getBulletColor());
-                    textParagraph.setBulletChar(templateParagragh.getBulletChar());
+
+                    // indent setting
                     textParagraph.setIndent(templateParagragh.getIndent());
-                    textParagraph.setBulletSize(templateParagragh.getBulletSize());
                     textParagraph.setIndentLevel(templateParagragh.getIndentLevel());
+
+                    // bullet setting
+                    ObjectUtils.copyPropertyByName("BulletStyle", templateParagragh, textParagraph);
+                    ObjectUtils.copyPropertyByName("BulletColor", templateParagragh, textParagraph);
+                    ObjectUtils.copyPropertyByName("BulletChar", templateParagragh, textParagraph);
+                    ObjectUtils.copyPropertyByName("BulletSize", templateParagragh, textParagraph);
 
                     for (int n = 0; n < textParagraph.getTextRuns().size(); n++) {
                         textParagraph.getTextRuns().get(n).setFontFamily(templateParagragh.getTextRuns().get(n).getFontFamily());
@@ -283,16 +288,22 @@ public class PPTHandler extends HanlderBase {
                                 HSLFTableCell templateCell = templateTable.getCell(r, c);
 
                                 // replace content
-                                newTable.getCell(r, c).setText(replacedItemText(item, templateCell.getText()));
                                 ObjectUtils.copyPropertyByName("FillColor", templateCell, newTable.getCell(r, c));
+                                newTable.getCell(r, c).setText(replacedItemText(item, templateCell.getText()));
+
                                 // set content style
                                 for (int n = 0; n < newTable.getCell(r, c).getTextParagraphs().size(); n++) {
                                     if (templateCell.getTextParagraphs().get(n) != null && newTable.getCell(r, c).getTextParagraphs().get(n) != null) {
                                         for (int m = 0; m < newTable.getCell(r, c).getTextParagraphs().get(n).getTextRuns().size(); m++) {
-                                            newTable.getCell(r, c).getTextParagraphs().get(n).getTextRuns().get(m).setFontColor(templateCell.getTextParagraphs().get(n).getTextRuns().get(m).getFontColor());
-                                            newTable.getCell(r, c).getTextParagraphs().get(n).getTextRuns().get(m).setFontFamily(templateCell.getTextParagraphs().get(n).getTextRuns().get(m).getFontFamily());
-                                            newTable.getCell(r, c).getTextParagraphs().get(n).getTextRuns().get(m).setFontSize(templateCell.getTextParagraphs().get(n).getTextRuns().get(m).getFontSize());
-                                            newTable.getCell(r, c).getTextParagraphs().get(n).getTextRuns().get(m).setBold(templateCell.getTextParagraphs().get(n).getTextRuns().get(m).isBold());
+                                            HSLFTextRun destTextRun = newTable.getCell(r, c).getTextParagraphs().get(n).getTextRuns().get(m);
+                                            HSLFTextRun sourceTextRun = templateCell.getTextParagraphs().get(n).getTextRuns().get(m);
+
+                                            destTextRun.setCharacterStyle(sourceTextRun.getCharacterStyle());
+                                            ObjectUtils.copyPropertyByName("FontFamily", sourceTextRun, destTextRun);
+                                            ObjectUtils.copyPropertyByName("FontSize", sourceTextRun, destTextRun);
+                                            destTextRun.setFontColor(sourceTextRun.getFontColor());
+                                            destTextRun.setBold(sourceTextRun.isBold());
+
                                         }
                                     }
                                 }
@@ -301,17 +312,17 @@ public class PPTHandler extends HanlderBase {
                                 newTable.getCell(r, c).setLineCompound(templateCell.getLineCompound());
                                 newTable.getCell(r, c).setLineDash(templateCell.getLineDash());
                                 newTable.getCell(r, c).setLineCap(templateCell.getLineCap());
-                                newTable.getCell(r, c).setLineHeadDecoration(templateCell.getLineHeadDecoration());
-                                newTable.getCell(r, c).setLineTailDecoration(templateCell.getLineTailDecoration());
                                 newTable.getCell(r, c).setLineBackgroundColor(templateCell.getLineBackgroundColor());
                                 newTable.getCell(r, c).setVerticalAlignment(templateCell.getVerticalAlignment());
-                                newTable.getCell(r, c).setAlignToBaseline(templateCell.isAlignToBaseline());
+                                newTable.getCell(r, c).setHorizontalCentered(true);
 
                                 // set the cell border style
                                 for (TableCell.BorderEdge borderEdge : TableCell.BorderEdge.values()) {
-                                    // if (templateCell.getBorderColor(borderEdge) != null) {
-                                    newTable.getCell(r, c).setBorderColor(borderEdge, Color.black);
-                                    //}
+                                    if (templateCell.getBorderColor(borderEdge) != null) {
+                                        newTable.getCell(r, c).setBorderColor(borderEdge, templateCell.getBorderColor(borderEdge));
+                                    } else {
+                                        newTable.getCell(r, c).setBorderColor(borderEdge, Color.black);
+                                    }
 
                                     if (templateCell.getBorderCompound(borderEdge) != null) {
                                         newTable.getCell(r, c).setBorderCompound(borderEdge, templateCell.getBorderCompound(borderEdge));
