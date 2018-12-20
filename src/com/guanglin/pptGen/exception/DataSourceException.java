@@ -12,4 +12,9 @@ public class DataSourceException extends Exception {
     public DataSourceException(Exception e) {
         super(e);
     }
+
+    public DataSourceException(String msg, String cellPosition) {
+        this(String.format("%s\n 请检查Excel文件内容，单元格:%s", msg, cellPosition ));
+
+    }
 }

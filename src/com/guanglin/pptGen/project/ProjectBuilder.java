@@ -94,7 +94,7 @@ public class ProjectBuilder {
             outputFolder.mkdir();
         }
 
-        // 6. the template file must exist
+        // 6. the project config file must exist
         File configFile = new File(projectPath + PRO_CONFIG_PATH);
         if (!configFile.exists()) {
             throw new ProjectValidationException("Project/project.ppt doesn't exist");

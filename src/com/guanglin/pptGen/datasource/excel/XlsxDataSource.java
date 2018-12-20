@@ -2,6 +2,7 @@ package com.guanglin.pptGen.datasource.excel;
 
 import com.google.common.base.Strings;
 import com.guanglin.pptGen.exception.DataSourceException;
+import com.guanglin.pptGen.exception.ExcelDataSourceException;
 import com.guanglin.pptGen.exception.ExcelValidationException;
 import com.guanglin.pptGen.model.Item;
 import com.guanglin.pptGen.model.Project;
@@ -86,7 +87,7 @@ public class XlsxDataSource extends ExcelDataSourceBase {
                             tmpMap.put(e.getValue(), "");
                             break;
                         default:
-                            throw new DataSourceException("unknown data format.");
+                            throw new ExcelDataSourceException(cell.getAddress().toString());
                     }
                     if (e.getValue() == "项目名称") {
                         item.setDescription(StringUtils.trim(cell.getStringCellValue()));

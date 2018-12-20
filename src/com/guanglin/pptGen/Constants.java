@@ -23,6 +23,10 @@ public class Constants {
 
     public final static Properties PROS = new Properties();
 
+    public final static String PPT_KEY_BACKGROUND_SRC = "ppt.background.src";
+    public final static String PPT_KEY_FONT_FAMILY = "ppt.font.family";
+    public final static String PPT_KEY_FONT_SIZE = "ppt.font.size";
+
 
     /*******************************************************/
 

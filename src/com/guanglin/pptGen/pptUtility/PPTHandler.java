@@ -1,12 +1,15 @@
 package com.guanglin.pptGen.pptUtility;
 
+import com.guanglin.pptGen.Constants;
 import com.guanglin.pptGen.exception.PPTException;
 import com.guanglin.pptGen.model.Item;
 import com.guanglin.pptGen.model.PPTTemplate;
 import com.guanglin.pptGen.model.Project;
+import com.guanglin.pptGen.utils.ImageUtils;
 import com.guanglin.pptGen.utils.ObjectUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+import org.apache.logging.log4j.util.Strings;
 import org.apache.poi.hslf.usermodel.HSLFAutoShape;
 import org.apache.poi.hslf.usermodel.HSLFFill;
 import org.apache.poi.hslf.usermodel.HSLFPictureData;
@@ -40,7 +43,6 @@ public class PPTHandler extends HanlderBase {
 
     private HSLFSlideShow templateShow = null;
     private HSLFSlideShow generatedShow = null;
-    private String fontFamily = null;
 
     public PPTHandler(FileInputStream templateStream, Project project) {
         super(templateStream, project);
@@ -124,7 +126,7 @@ public class PPTHandler extends HanlderBase {
     @Override
     protected void generateOutputSlide() throws PPTException {
 
-        LOGGER.info("****  开始生成项目ppt文件  ****");
+        LOGGER.info(PPTLogMessage.INFO_START_GEN_PPT);
         LOGGER.debug("start to generate output slide");
         generatedShow = new HSLFSlideShow();
         generatedShow.setPageSize(templateShow.getPageSize());
@@ -189,12 +191,10 @@ public class PPTHandler extends HanlderBase {
             // TODO: investigate how to set background
             LOGGER.debug("start to set background.");
             slide.setFollowMasterBackground(false);
-            if (templateSlide.getBackground() != null &&
-                    templateSlide.getBackground().getFill() != null &&
-                    templateSlide.getBackground().getFill().getPictureData() != null) {
-                byte[] templateBackgroundData = templateSlide.getBackground().getFill().getPictureData().getRawData();
-                PictureData.PictureType pictureType = templateSlide.getBackground().getFill().getPictureData().getType();
-                HSLFPictureData pictureData = generatedShow.addPicture(templateBackgroundData, pictureType);
+
+            // set ppt background if the background has been specified.
+            if (Strings.isNotBlank(Constants.PROS.getProperty(Constants.PPT_KEY_BACKGROUND_SRC))) {
+                HSLFPictureData pictureData = generatedShow.addPicture(ImageUtils.getImageBytes(Constants.PROS.getProperty(Constants.PPT_KEY_BACKGROUND_SRC).trim()), PictureData.PictureType.JPEG);
                 slide.getBackground().getFill().setFillType(HSLFFill.FILL_PICTURE);
                 slide.getBackground().getFill().setPictureData(pictureData);
             }
@@ -210,14 +210,15 @@ public class PPTHandler extends HanlderBase {
                 if (setOutDoor && !hasSetOutdoor) {
                     // set the outdoor image
                     LOGGER.debug("start to build outdoor image shape ");
-                    pictureData = generatedShow.addPicture(item.getOutsideCapture().getBytes(), PictureData.PictureType.JPEG);
+                    pictureData = generatedShow.addPicture(ImageUtils.getImageBytes(item.getOutsideCapture().getCapturePath()), PictureData.PictureType.JPEG);
                     hasSetOutdoor = true;
                 } else {
                     LOGGER.debug("start to build indoor image shape ");
-                    pictureData = generatedShow.addPicture(item.getInsideCaptures().pop().getBytes(), PictureData.PictureType.JPEG);
+                    pictureData = generatedShow.addPicture(ImageUtils.getImageBytes(item.getInsideCaptures().pop().getCapturePath()), PictureData.PictureType.JPEG);
                 }
                 pictureShape = new HSLFPictureShape(pictureData);
                 pictureShape.setAnchor(shape.getAnchor());
+                pictureShape.setShapeId(shape.getShapeId());
                 slide.addShape(pictureShape);
 
             } else if (shape instanceof HSLFTextBox) {
@@ -265,7 +266,7 @@ public class PPTHandler extends HanlderBase {
                     }
                     */
                 }
-
+                newTextBox.setShapeId(shape.getShapeId());
                 slide.addShape(newTextBox);
             } else if (shape instanceof HSLFTable) {
                 HSLFTable templateTable = (HSLFTable) shape;
@@ -285,6 +286,7 @@ public class PPTHandler extends HanlderBase {
 
                             if (templateTable.getCell(r, c) != null) {
 
+
                                 HSLFTableCell templateCell = templateTable.getCell(r, c);
 
                                 // replace content
@@ -299,15 +301,25 @@ public class PPTHandler extends HanlderBase {
                                             HSLFTextRun sourceTextRun = templateCell.getTextParagraphs().get(n).getTextRuns().get(m);
 
                                             destTextRun.setCharacterStyle(sourceTextRun.getCharacterStyle());
+
+                                            // deal with fontFamily
                                             ObjectUtils.copyPropertyByName("FontFamily", sourceTextRun, destTextRun);
+                                            if(Strings.isNotBlank(Constants.PROS.getProperty(Constants.PPT_KEY_FONT_FAMILY))) {
+                                                destTextRun.setFontFamily(Constants.PROS.getProperty(Constants.PPT_KEY_FONT_FAMILY));
+                                            }
+
+                                            // deal with fontSize
                                             ObjectUtils.copyPropertyByName("FontSize", sourceTextRun, destTextRun);
+                                            if(Strings.isNotBlank(Constants.PROS.getProperty(Constants.PPT_KEY_FONT_SIZE))) {
+                                                destTextRun.setFontFamily(Constants.PROS.getProperty(Constants.PPT_KEY_FONT_SIZE));
+                                            }
+
                                             destTextRun.setFontColor(sourceTextRun.getFontColor());
                                             destTextRun.setBold(sourceTextRun.isBold());
 
                                         }
                                     }
                                 }
-
                                 newTable.getCell(r, c).setLineColor(templateCell.getLineColor());
                                 newTable.getCell(r, c).setLineCompound(templateCell.getLineCompound());
                                 newTable.getCell(r, c).setLineDash(templateCell.getLineDash());
@@ -348,6 +360,8 @@ public class PPTHandler extends HanlderBase {
                     }
 
                 }
+
+                newTable.setShapeId(shape.getShapeId());
                 slide.addShape(newTable);
 
 
